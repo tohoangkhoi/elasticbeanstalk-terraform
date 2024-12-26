@@ -88,24 +88,24 @@ resource "aws_vpc_security_group_egress_rule" "outbound_rule_allow_https_ipv4" {
   #   security_group_id = aws_security_group.allow_tls.id
   security_group_id = aws_security_group.ec2_security_group.id
   cidr_ipv4         = aws_vpc.main.cidr_block
-  from_port = 443
-  to_port = 443
+  from_port         = 443
+  to_port           = 443
   ip_protocol       = "tcp" # semantically equivalent to all ports
 }
 
 resource "aws_s3_bucket" "source_code_storage_bucket" {
-  bucket = var.source_code_storage_bucket_name
+  bucket        = var.source_code_storage_bucket_name
   force_destroy = true
 
   tags = {
-    Name        = var.source_code_storage_bucket_name
+    Name = var.source_code_storage_bucket_name
   }
 }
 
 
 # Only bucket owner and AWS services can interact with bucket
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
-  bucket = aws_s3_bucket.source_code_storage_bucket.id
+  bucket                  = aws_s3_bucket.source_code_storage_bucket.id
   restrict_public_buckets = true
 }
 
@@ -113,7 +113,7 @@ resource "aws_s3_object" "source_code" {
   bucket = var.source_code_storage_bucket_name
   key    = var.source_code_file_name
   source = "./avertro_api.zip"
-  etag = filemd5("./avertro_api.zip")
+  etag   = filemd5("./avertro_api.zip")
 }
 
 # IAM Role
@@ -130,10 +130,10 @@ resource "aws_iam_policy" "cloudformation_operations" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCloudformationOperationsOnElasticBeanstalkStacks"
-        Effect    = "Allow"
-        Action    = ["cloudformation:*"]
-        Resource  = [
+        Sid    = "AllowCloudformationOperationsOnElasticBeanstalkStacks"
+        Effect = "Allow"
+        Action = ["cloudformation:*"]
+        Resource = [
           "arn:aws:cloudformation:*:*:stack/awseb-*",
           "arn:aws:cloudformation:*:*:stack/eb-*"
         ]
@@ -150,10 +150,10 @@ resource "aws_iam_policy" "cloudwatch_logs" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowDeleteCloudwatchLogGroups"
-        Effect    = "Allow"
-        Action    = ["logs:DeleteLogGroup"]
-        Resource  = ["arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*"]
+        Sid      = "AllowDeleteCloudwatchLogGroups"
+        Effect   = "Allow"
+        Action   = ["logs:DeleteLogGroup"]
+        Resource = ["arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*"]
       }
     ]
   })
@@ -167,10 +167,10 @@ resource "aws_iam_policy" "s3_operations" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowS3OperationsOnElasticBeanstalkBuckets"
-        Effect    = "Allow"
-        Action    = ["s3:*"]
-        Resource  = [
+        Sid    = "AllowS3OperationsOnElasticBeanstalkBuckets"
+        Effect = "Allow"
+        Action = ["s3:*"]
+        Resource = [
           "arn:aws:s3:::elasticbeanstalk-*",
           "arn:aws:s3:::elasticbeanstalk-*/*"
         ]
@@ -194,16 +194,21 @@ resource "aws_iam_role_policy_attachment" "s3_attachment" {
   role       = aws_iam_role.elastic_beanstalk_role.name
   policy_arn = aws_iam_policy.s3_operations.arn
 }
-
-
 resource "aws_elastic_beanstalk_application" "avertro-api-app" {
-  name        = var.application_app_name
+  name = var.application_app_name
 
   appversion_lifecycle {
-    service_role          = aws_iam_role.elastic_beanstalk_service_role.arn
+    service_role          = aws_iam_role.elastic_beanstalk_role.arn
     max_count             = 128
     delete_source_from_s3 = true
   }
+}
+
+resource "aws_elastic_beanstalk_application_version" "app_version" {
+  name        = "tf-avertro-api-app-version"
+  application = aws_elastic_beanstalk_application.avertro-api-app.name
+  bucket      = aws_s3_bucket.source_code_storage_bucket.id
+  key         = aws_s3_object.source_code.id
 }
 
 
