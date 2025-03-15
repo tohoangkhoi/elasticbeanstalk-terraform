@@ -7,20 +7,6 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_iam_policy_document" "assume_role_policy" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["elasticbeanstalk.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-
 locals {
   az_names = data.aws_availability_zones.available.names
 }
@@ -73,7 +59,38 @@ resource "aws_route_table_association" "main" {
   route_table_id = aws_route_table.main.id
 }
 
+resource "aws_security_group" "lb_security_group" {
+  name        = var.lb_security_group_name
+  description = "Security group for load balancer"
+  vpc_id      = aws_vpc.main.id
 
+  tags = {
+    Name = var.lb_security_group_name
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "lb_sg_inbound_rule_allow_https_ipv4" {
+  security_group_id = aws_security_group.lb_security_group.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+}
+resource "aws_vpc_security_group_egress_rule" "lb_sg_outbound_rule_allow_https_ipv4" {
+  security_group_id = aws_security_group.lb_security_group.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "lb_sg_outbound_rule_allow_http_ipv4_from_ec2_sg" {
+  security_group_id            = aws_security_group.lb_security_group.id
+  from_port                    = 80
+  to_port                      = 80
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.ec2_security_group.id
+}
 
 resource "aws_security_group" "ec2_security_group" {
   name        = var.eb_security_group_name
@@ -86,24 +103,47 @@ resource "aws_security_group" "ec2_security_group" {
 }
 
 
-resource "aws_vpc_security_group_ingress_rule" "inbound_rule_allow_https_ipv4" {
+resource "aws_vpc_security_group_ingress_rule" "inbound_rule_allow_http_ipv4_from_load_balancer" {
+  security_group_id            = aws_security_group.ec2_security_group.id
+  from_port                    = 80
+  to_port                      = 80
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.lb_security_group.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "ec2_outbound_rule_allow_all_traffic" {
   security_group_id = aws_security_group.ec2_security_group.id
   cidr_ipv4         = "0.0.0.0/0"
-  from_port         = 443
-  to_port           = 443
-  ip_protocol       = "tcp"
+  ip_protocol       = -1
 }
 
 
-resource "aws_vpc_security_group_egress_rule" "outbound_rule_allow_https_ipv4" {
-  security_group_id = aws_security_group.ec2_security_group.id
-  cidr_ipv4         = "0.0.0.0/0"
-  from_port         = 443
-  to_port           = 443
-  ip_protocol       = "tcp"
+resource "aws_security_group" "rds_security_group" {
+  name        = var.rds_security_group_name
+  description = "Security group for rds database"
+  vpc_id      = aws_vpc.main.id
+
+  tags = {
+    Name = var.rds_security_group_name
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "rds_sg_inbound_rule" {
+  security_group_id            = aws_security_group.rds_security_group.id
+  referenced_security_group_id = aws_security_group.ec2_security_group.id
+  from_port                    = 5432
+  to_port                      = 5432
+  ip_protocol                  = "tcp"
 }
 
 
+resource "aws_vpc_security_group_egress_rule" "rds_sg_outbound_rule" {
+  security_group_id            = aws_security_group.rds_security_group.id
+  referenced_security_group_id = aws_security_group.ec2_security_group.id
+  from_port                    = 5432
+  to_port                      = 5432
+  ip_protocol                  = "tcp"
+}
 
 
 

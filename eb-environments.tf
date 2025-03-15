@@ -1,8 +1,21 @@
+data "aws_iam_policy_document" "assume_role_policy" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["elasticbeanstalk.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
 # IAM Role
 # Can't assign a whole policy of BeanstealkServiceRole to our IAM role via terraform, because it will cause "limit exceed error", 
 # therefore we need to break the rules in to 3 small parts
 resource "aws_iam_role" "elastic_beanstalk_role" {
-  name               = "terraform_elastic_beanstalk_service_role"
+  name               = "tf_elastic_beanstalk_service_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
 }
 
@@ -99,7 +112,7 @@ resource "aws_elastic_beanstalk_application_version" "app_version" {
 
 #Create an IamInstanceProfile or Beanstalk Environment
 resource "aws_iam_role" "elastic_beanstalk_ec2_role" {
-  name = "aws-elasticbeanstalk-ec2-role"
+  name = "tf-elasticbeanstalk-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -116,38 +129,43 @@ resource "aws_iam_role" "elastic_beanstalk_ec2_role" {
 }
 
 resource "aws_iam_policy_attachment" "beanstalk_ec2_role_policy_attachment" {
-  name       = "beanstalk-ec2-policy-attachment"
+  name       = "tf-beanstalk-ec2-policy-attachment"
   roles      = [aws_iam_role.elastic_beanstalk_ec2_role.name]
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
 }
 
 resource "aws_iam_policy_attachment" "beanstalk_ec2_role_policy_attach" {
-  name       = "beanstalk-ec2-policy-attach"
+  name       = "tf-beanstalk-ec2-policy-attach"
   roles      = [aws_iam_role.elastic_beanstalk_ec2_role.name]
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier"
 }
 
 resource "aws_iam_instance_profile" "elastic_beanstalk_instance_profile" {
-  name = "aws-elasticbeanstalk-ec2-instance-profile"
+  name = "tf-elasticbeanstalk-ec2-instance-profile"
   role = aws_iam_role.elastic_beanstalk_ec2_role.name
 }
 
 # Elastic Beanstalk Environments
 resource "aws_elastic_beanstalk_environment" "env" {
-  for_each            = toset(var.environment_suffix)
-  name                = "${each.value}-api"
+  name                = var.environment_suffix
   application         = aws_elastic_beanstalk_application.avertro-api-app.name
   version_label       = aws_elastic_beanstalk_application_version.app_version.name
   solution_stack_name = "64bit Amazon Linux 2 v4.0.5 running Docker"
 
   dynamic "setting" {
-    for_each = local.environment_variables
 
+    for_each = local.environment_variables
     content {
       namespace = "aws:elasticbeanstalk:application:environment"
-      name      = each.key
-      value     = each.value
+      name      = setting.key
+      value     = setting.value
     }
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "DB_HOST"
+    value     = aws_rds_cluster.db_cluster.endpoint
   }
 
   setting {
@@ -193,7 +211,7 @@ resource "aws_elastic_beanstalk_environment" "env" {
   setting {
     namespace = "aws:ec2:instances"
     name      = "InstanceTypes"
-    value     = "t2.micro"
+    value     = "t3.medium"
   }
   setting {
     namespace = "aws:elasticbeanstalk:environment"
@@ -201,7 +219,6 @@ resource "aws_elastic_beanstalk_environment" "env" {
     value     = true
   }
   setting {
-
     namespace = "aws:elasticbeanstalk:environment"
     name      = "LoadBalancerType"
     value     = "application"
@@ -228,6 +245,28 @@ resource "aws_elastic_beanstalk_environment" "env" {
     namespace = "aws:elasticbeanstalk:healthreporting:system"
     name      = "SystemType"
     value     = "enhanced"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "StreamLogs"
+    value     = true
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "DeleteOnTerminate"
+    value     = false
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "RetentionInDays"
+    value     = 1
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:command"
+    name      = "Timeout"
+    value     = "1800"
   }
 
 }

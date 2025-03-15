@@ -74,6 +74,5 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "lb_bucket_configu
 # Define the S3 Bucket Policy
 resource "aws_s3_bucket_policy" "lb_bucket_policy" {
   bucket = aws_s3_bucket.lb_log_storage.id
-
   policy = data.aws_iam_policy_document.elb_service_account_policy.json
 }

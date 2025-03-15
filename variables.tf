@@ -10,20 +10,20 @@ variable "hosted_zone_id" {
   default = "Z02755413453VY1T9KYZJ"
 }
 
-variable  "vpc_tag_name" {
-  default = "terraform-vpc-name"
+variable "vpc_tag_name" {
+  default = "tf-vpc-name"
 }
 
 variable "internet_gateway_name" {
-  default = "terraform-internet-gateway"
+  default = "tf-internet-gateway"
 }
 
 variable "environment_suffix" {
-  default = ["dev"] # Environments
+  default = "dev-api" # Environments
 }
 
 variable "source_code_storage_bucket_name" {
-  default = "terraform-av-api"
+  default = "tf-av-api"
 }
 
 variable "source_code_file_name" {
@@ -36,11 +36,11 @@ variable "application_app_name" {
 
 
 variable "lb_log_bucket_name" {
-  default = "terraform-load-balancer-log-storage"
+  default = "tf-load-balancer-log-storage"
 }
 
 variable "lb_name" {
-  default = "terraform-avertro-load-balancer"
+  default = "tf-avertro-load-balancer"
 }
 
 variable "lb_ssl_policy" {
@@ -52,13 +52,31 @@ variable "certificate_arn" {
 }
 
 variable "lb_target_group_name" {
-  default = "terraform-lb-target-group"
+  default = "tf-lb-target-group"
 }
 
-variable "db_password" {
-  default="postgres"
+
+variable "lb_security_group_name" {
+  default = "load balancer security group"
+}
+variable "eb_security_group_name" {
+  default = "ec2 security group"
 }
 
+variable "rds_security_group_name" {
+  default = "tf-rds-sg"
+}
+
+
+
+locals {
+  db_subnet_group_name = "tf-db-subnet-group"
+  db_cluster_name      = "tf-rds-cluster"
+  db_username          = "postgres"
+  db_password          = "zxnmcmsadksdafjawefasdjkfnjkawef"
+  db_name              = "tfdb"
+  kms_key_id           = "arn:aws:kms:ap-southeast-2:203918882105:key/1dd00071-f703-4b0d-befa-8bfdaefa27de"
+}
 
 locals {
   environment_variables = {
@@ -71,12 +89,12 @@ locals {
     AWS_SECRET_ACCESS_KEY = "ewgxavepXqZ7RO+jlJR2bB5wBiAqjJXn5/rsV6jD"
     BASE_URL              = "https://dev.khoi-mockapi.com"
     CONNECT_API           = ""
-    DB_HOST               = "db_host"
-    DB_NAME               = "db_name"
-    DB_PASSWORD           = "${var.db_password}"
-    DB_PORT               = "5432"
-    DB_USER               = "db_user"
-    JWT_SECRET      = "some-string-ideally-uuid"
+    # DB_HOST               = "db_host"
+    DB_NAME         = "${local.db_name}"
+    DB_PASSWORD     = "${local.db_password}"
+    DB_PORT         = "5432"
+    DB_USER         = "${local.db_username}"
+    JWT_SECRET      = "${local.db_password}"
     MAILGUN_API_KEY = ""
     MAILGUN_DOMAIN  = ""
     REDIS_HOST      = ""
