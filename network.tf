@@ -1,6 +1,6 @@
 provider "aws" {
   region  = var.aws_region
-  profile = "tohoangkhoi-aws-profile"
+  profile = "YOUR_AWS_PROFILE"
 }
 
 data "aws_availability_zones" "available" {
