@@ -3,6 +3,7 @@
 ## 1. Configure Terraform Variables
 
 Replace all generic variables in `variables.tf` to suit your configuration. This includes settings like region, resource names, domain names, etc.
+in `network.tf`, enter your AWS_PROFILE (aws cli profile)
 
 ## 2. Prepare Back-End Code
 
