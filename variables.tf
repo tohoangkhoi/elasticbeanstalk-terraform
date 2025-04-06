@@ -50,11 +50,11 @@ variable "certificate_arn" {
 }
 
 //Use this for go_daddy
-# resource "aws_acm_certificate" "godaddy_cert" {
-#   private_key       = file("private.key")
-#   certificate_body  = file("certificate.crt")
-#   certificate_chain = file("ca_bundle.crt")
-# }
+resource "aws_acm_certificate" "godaddy_cert" {
+  private_key       = file("private.key")
+  certificate_body  = file("certificate.crt")
+  certificate_chain = file("ca_bundle.crt")
+}
 
 
 
