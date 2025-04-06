@@ -3,12 +3,9 @@ variable "aws_region" {
 }
 
 variable "domain_name" {
-  default = "khoi-mockapi.com" # Replace with your custom domain
+  default = "YOUR_DOMAIN_NAME"
 }
 
-variable "hosted_zone_id" {
-  default = "Z02755413453VY1T9KYZJ"
-}
 
 variable "vpc_tag_name" {
   default = "tf-vpc-name"
@@ -26,6 +23,7 @@ variable "source_code_storage_bucket_name" {
   default = "tf-av-api"
 }
 
+//The zip file of the application, need to be placed in the same directory
 variable "source_code_file_name" {
   default = "avertro-api.zip"
 }
@@ -48,8 +46,17 @@ variable "lb_ssl_policy" {
 }
 
 variable "certificate_arn" {
-  default = "arn:aws:acm:ap-southeast-2:203918882105:certificate/ec0ed780-b15f-4059-8203-32a18b7f1b2b"
+  default = "YOUR_CERTIFICATE_ARN"
 }
+
+//Use this for go_daddy
+# resource "aws_acm_certificate" "godaddy_cert" {
+#   private_key       = file("private.key")
+#   certificate_body  = file("certificate.crt")
+#   certificate_chain = file("ca_bundle.crt")
+# }
+
+
 
 variable "lb_target_group_name" {
   default = "tf-lb-target-group"
@@ -70,12 +77,12 @@ variable "rds_security_group_name" {
 
 
 locals {
-  db_subnet_group_name = "tf-db-subnet-group"
-  db_cluster_name      = "tf-rds-cluster"
-  db_username          = "postgres"
-  db_password          = "zxnmcmsadksdafjawefasdjkfnjkawef"
-  db_name              = "tfdb"
-  kms_key_id           = "arn:aws:kms:ap-southeast-2:203918882105:key/1dd00071-f703-4b0d-befa-8bfdaefa27de"
+  db_subnet_group_name = "YOUR_SUBNET_GROUP_NAME"
+  db_cluster_name      = "YOUR_DB_CLUSTER_NAME"
+  db_username          = "YOUR_DB_USER_NAME"
+  db_password          = "YOUR_DB_PASSWORD"
+  db_name              = "YOUR_DB_NAME"
+  kms_key_id           = "YOUR_KMS_KEY_ARN"
 }
 
 locals {
@@ -85,11 +92,10 @@ locals {
     API_ENDPOINT          = ""
     AVERTRO_DATA_TOKEN    = ""
     AVERTRO_DATA_URL      = ""
-    AWS_ACCESS_KEY_ID     = "AKIAS66UDGU4QISCR4N2"
-    AWS_SECRET_ACCESS_KEY = "ewgxavepXqZ7RO+jlJR2bB5wBiAqjJXn5/rsV6jD"
-    BASE_URL              = "https://dev.khoi-mockapi.com"
+    AWS_ACCESS_KEY_ID     = "YOUR_AWS_ACCESS_KEY_ID"
+    AWS_SECRET_ACCESS_KEY = "YOUR_AWS_SECRET_KEY"
+    BASE_URL              = "YOUR_BASE_URL"
     CONNECT_API           = ""
-    # DB_HOST               = "db_host"
     DB_NAME         = "${local.db_name}"
     DB_PASSWORD     = "${local.db_password}"
     DB_PORT         = "5432"
