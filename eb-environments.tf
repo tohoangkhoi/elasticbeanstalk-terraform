@@ -128,13 +128,13 @@ resource "aws_iam_role" "elastic_beanstalk_ec2_role" {
   })
 }
 
-resource "aws_iam_policy_attachment" "beanstalk_ec2_role_policy_attachment" {
+resource "aws_iam_policy_attachment" "beanstalk_ec2_role_policy_webtier" {
   name       = "tf-beanstalk-ec2-policy-attachment"
   roles      = [aws_iam_role.elastic_beanstalk_ec2_role.name]
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
 }
 
-resource "aws_iam_policy_attachment" "beanstalk_ec2_role_policy_attach" {
+resource "aws_iam_policy_attachment" "beanstalk_ec2_role_policy_worker_tier" {
   name       = "tf-beanstalk-ec2-policy-attach"
   roles      = [aws_iam_role.elastic_beanstalk_ec2_role.name]
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier"
